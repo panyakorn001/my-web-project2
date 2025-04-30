@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>การนำทางไปยังตึกมหาวิทยาลัย</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            color: #333;
+        }
+
+        header {
+            background-color: #004080;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #004080;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #003366;
+        }
+
+        #endSelector {
+            padding: 10px;
+            font-size: 1rem;
+            min-width: 200px;
+            border-radius: 6px;
+        }
+
+        .map-section {
+            padding: 0 10px;
+        }
+
+        h3 {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #building-details {
+            padding: 20px;
+            background: #f4f4f4;
+            font-size: 1rem;
+            line-height: 1.6;
+            border-top: 1px solid #ddd;
+        }
+
+        @media (min-width: 600px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            button, #endSelector {
+                font-size: 1.1rem;
+                padding: 12px 24px;
+            }
+
+            h3 {
+                font-size: 1.4rem;
+            }
+
+            #map {
+                height: 500px;
+            }
+
+            #building-details {
+                font-size: 1.1rem;
+                padding: 25px;
+            }
+        }
+
+        @media (min-width: 992px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            button, #endSelector {
+                font-size: 1.2rem;
+                padding: 14px 28px;
+            }
+
+            h3 {
+                font-size: 1.6rem;
+            }
+
+            #map {
+                height: 600px;
+            }
+
+            #building-details {
+                font-size: 1.2rem;
+                padding: 30px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            #map {
+                height: 700px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>การนำทางไปยังมหาวิทยาลัยเทคโนโลยีราชมงคลอีสาน</h1>
+    </header>
+
+    <div class="controls">
+        <button onclick="goBack()">ย้อนกลับ</button>
+        <select id="endSelector">
+            <option value="">-- จุดปลายทาง --</option>
+        </select>
+    </div>
+
+    <section class="map-section">
+        <h3>ที่ตั้งบนแผนที่</h3>
+        <div id="map"></div>
+    </section>
+
+    <section id="building-details">
+        <h3>รายละเอียดของอาคาร</h3>
+        <p>กรุณาเลือกจุดปลายทางและเดินทางไปถึงเพื่อดูข้อมูล</p>
+    </section>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.min.js"></script>
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+
+        const map = L.map('map').setView([14.986307, 102.118263], 16);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const nodes = {
+            B: { name: "ตึก 35", lat: 14.9851860, lng: 102.1208025 },
+            C: { name: "ตึก 34", lat: 14.9845059, lng: 102.1210203 },
+            D: { name: "ออกแบบอุตสาหกรรม", lat: 14.9870487, lng: 102.1204064 },
+        };
+
+        const dropdownEnd = document.getElementById('endSelector');
+        Object.entries(nodes).forEach(([key, node]) => {
+            const optionEnd = document.createElement('option');
+            optionEnd.value = key;
+            optionEnd.textContent = node.name;
+            dropdownEnd.appendChild(optionEnd);
+        });
+
+        let routingControl;
+        let currentLocation = null;
+        let endMarker = null;
+        let destinationInterval;
+        let destinationMarkers = [];
+
+        function drawRouteToDestination(endKey) {
+            const end = nodes[endKey];
+
+            if (!currentLocation) {
+                alert("ยังไม่สามารถระบุตำแหน่งปัจจุบันได้");
+                return;
+            }
+
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+
+            if (endMarker) {
+                map.removeLayer(endMarker);
+            }
+
+            destinationMarkers.forEach(marker => map.removeLayer(marker));
+            destinationMarkers = [];
+
+            endMarker = L.marker([end.lat, end.lng]).addTo(map).bindPopup(end.name);
+            destinationMarkers.push(endMarker);
+
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(currentLocation.lat, currentLocation.lng),
+                    L.latLng(end.lat, end.lng)
+                ],
+                router: new L.Routing.OSRMv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                }),
+                lineOptions: {
+                    styles: [{ color: 'blue', weight: 5 }]
+                },
+                createMarker: function(i, wp) {
+                    return L.marker(wp.latLng).bindPopup(i === 0 ? "ตำแหน่งปัจจุบันของคุณ" : end.name);
+                },
+                routeWhileDragging: false,
+                show: false // <<== เพิ่มตรงนี้ เพื่อซ่อน instruction panel
+            }).addTo(map);
+
+            if (destinationInterval) clearInterval(destinationInterval);
+
+            destinationInterval = setInterval(() => {
+                if (!currentLocation || !end) return;
+
+                const dist = map.distance(
+                    L.latLng(currentLocation.lat, currentLocation.lng),
+                    L.latLng(end.lat, end.lng)
+                );
+
+                if (dist < 30) {
+                    clearInterval(destinationInterval);
+                    alert("คุณถึงจุดหมายแล้ว!");
+                    fetchBuildingDetails(endKey);
+                }
+            }, 3000);
+        }
+
+        function fetchBuildingDetails(buildingCode) {
+            fetch(`/api/building-details?code=${buildingCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    const detailDiv = document.getElementById('building-details');
+                    let html = `<h2>${data.name}</h2><ul>`;
+                    data.rooms.forEach(room => {
+                        html += `<li><b>ห้อง ${room.room}</b>: ${room.description}</li>`;
+                    });
+                    html += `</ul>`;
+                    detailDiv.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error('โหลดข้อมูลล้มเหลว:', err);
+                });
+        }
+
+        if (confirm("เว็บไซต์นี้ต้องการเข้าถึงตำแหน่งของคุณเพื่อแสดงเส้นทาง กรุณากดยอมรับเพื่อใช้งาน")) {
+            navigator.geolocation.watchPosition(position => {
+                currentLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                const direction = position.coords.heading; // หาค่าทิศทางของมือถือ
+
+                // เพิ่มไอคอนแสดงตำแหน่ง
+                const marker = L.marker([currentLocation.lat, currentLocation.lng], {
+                    icon: L.divIcon({
+                        className: 'leaflet-div-icon',
+                        html: `<div style="transform: rotate(${direction}deg);">&#8593;</div>`,
+                        iconSize: [30, 30]
+                    })
+                }).addTo(map);
+
+                map.setView([currentLocation.lat, currentLocation.lng], 16);
+                drawRouteToDestination(dropdownEnd.value);
+            }, error => {
+                alert("เกิดข้อผิดพลาดในการเข้าถึงตำแหน่งของคุณ: " + error.message);
+            }, {
+                enableHighAccuracy: true,
+                maximumAge: 1000,
+                timeout: 5000
+            });
+        } else {
+            alert("คุณจะไม่สามารถใช้งานฟีเจอร์นำทางได้หากไม่อนุญาตให้เข้าถึงตำแหน่ง");
+        }
+
+        dropdownEnd.addEventListener('change', () => {
+            const end = dropdownEnd.value;
+            if (end) {
+                drawRouteToDestination(end);
+            }
+        });
+    </script>
+</body>
+</html>

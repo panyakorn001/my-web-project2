@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบนำทางตึกมหาวิทยาลัย</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #004080;
+      color: white;
+      padding: 1.5rem 1rem;
+      text-align: center;
+    }
+
+    nav {
+      background-color: #0059b3;
+    }
+
+    nav ul {
+      display: flex;
+      flex-direction: column;
+      list-style: none;
+    }
+
+    nav li {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    nav a {
+      display: block;
+      padding: 1rem;
+      color: white;
+      text-decoration: none;
+      text-align: center;
+      transition: background 0.3s;
+    }
+
+    nav a:hover {
+      background-color: #003d80;
+    }
+
+    .introduction {
+      flex: 1;
+      padding: 2rem;
+      text-align: center;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      margin: 2rem auto;
+      max-width: 800px;
+      border-radius: 8px;
+    }
+
+    .introduction h2 {
+      color: #004080;
+      margin-bottom: 1rem;
+    }
+
+    footer {
+      background-color: #004080;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      margin-top: auto;
+    }
+
+    @media (min-width: 768px) {
+      nav ul {
+        flex-direction: row;
+        justify-content: center;
+      }
+
+      nav li {
+        border: none;
+      }
+
+      nav a {
+        padding: 1rem 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ระบบนำทางไปยังตึกมหาวิทยาลัย</h1>
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="./info/building_selection.php">ข้อมูลตึก</a></li>
+      <li><a href="./navigate/navigate.html">การนำทางไปยังตึก</a></li>
+      <li><a href="./history/history.html">ประวัติการเดินทาง</a></li>
+      <li><a href="./announcement/announcement.html">ข่าวประชาสัมพันธ์</a></li>
+    </ul>
+  </nav>
+
+  <section class="introduction">
+    <h2>ยินดีต้อนรับสู่ระบบนำทางมหาวิทยาลัย</h2>
+    <p>คุณสามารถเลือกดูข้อมูลตึกหรือค้นหาเส้นทางไปยังตึกต่าง ๆ ในมหาวิทยาลัยได้จากเมนูด้านบน</p>
+  </section>
+
+  <footer>
+    <p>© 2024 ระบบนำทางตึกมหาวิทยาลัย</p>
+  </footer>
+</body>
+</html>

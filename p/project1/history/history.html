@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ประวัติการเดินทาง</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #004080;
+      color: white;
+      padding: 1.5rem 1rem;
+      text-align: center;
+    }
+
+    nav {
+      margin-top: 10px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      display: inline-block;
+      background-color: #0066cc;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+
+    nav a:hover {
+      background-color: #003d80;
+    }
+
+    .travel-history {
+      padding: 2rem;
+      max-width: 800px;
+      margin: 2rem auto;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .travel-history h2 {
+      margin-bottom: 1rem;
+      color: #004080;
+      text-align: center;
+    }
+
+    .travel-history ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .travel-history li {
+      background-color: #e6f0ff;
+      border-left: 5px solid #004080;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+    }
+
+    footer {
+      background-color: #004080;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      margin-top: auto;
+    }
+
+    @media (max-width: 600px) {
+      .travel-history {
+        padding: 1rem;
+        margin: 1rem;
+      }
+
+      nav a {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ประวัติการเดินทาง</h1>
+    <nav>
+      <a href="../index.html">หน้าหลัก</a>
+    </nav>
+  </header>
+
+  <section class="travel-history">
+    <h2>รายการประวัติการเดินทาง</h2>
+    <ul>
+      <li>ตึก A - วันที่: 12 ต.ค. 2024 - เวลาเดินทาง: 15 นาที</li>
+      <li>ตึก B - วันที่: 10 ต.ค. 2024 - เวลาเดินทาง: 10 นาที</li>
+      <!-- เพิ่มรายการประวัติการเดินทางเพิ่มเติม -->
+    </ul>
+  </section>
+
+  <footer>
+    <p>© 2024 ระบบนำทางตึกมหาวิทยาลัย</p>
+  </footer>
+</body>
+</html>

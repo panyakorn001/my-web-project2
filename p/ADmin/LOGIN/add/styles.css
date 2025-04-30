@@ -1,0 +1,86 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+header {
+    background: #4CAF50;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    width: 100%;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 36px;
+}
+
+.form-section {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+    max-width: 500px; /* จำกัดความกว้างให้เหมาะสม */
+    width: 90%; /* ขยายความกว้างให้เต็มพื้นที่ */
+    margin-top: 20px; /* ลดระยะห่าง */
+}
+
+h2 {
+    text-align: center; /* จัดกลางหัวข้อ */
+    font-size: 24px; /* ขยายขนาดฟอนต์หัวข้อ */
+    color: #333; /* เปลี่ยนสีฟอนต์ */
+}
+
+.form-group {
+    margin-bottom: 20px; /* ระยะห่างระหว่างกลุ่ม */
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px; /* ระยะห่างด้านล่าง label */
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="email"],
+textarea {
+    width: 100%;
+    padding: 10px; /* เพิ่ม padding */
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px; /* ขยายขนาดฟอนต์ */
+}
+
+textarea {
+    resize: vertical; /* ให้ปรับขนาดได้ในแนวตั้ง */
+}
+
+button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px; /* เพิ่ม padding */
+    margin-top: 10px;
+    width: 100%;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px; /* ขยายขนาดฟอนต์ */
+}
+
+button:hover {
+    background: #45a049;
+}
+
+footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+}
