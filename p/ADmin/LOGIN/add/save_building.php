@@ -1,65 +1,63 @@
 <?php
-// ตรวจสอบว่าไฟล์ถูกอัปโหลดมาหรือไม่
-if (isset($_FILES["image_url"]) && $_FILES["image_url"]["error"] == 0) {
-    // กำหนดตำแหน่งที่ต้องการเก็บไฟล์
-    $target_directory = "uploads/"; // โฟลเดอร์ที่เก็บไฟล์
-    $target_file = $target_directory . basename($_FILES["image_url"]["name"]);
-    
-    // ตรวจสอบประเภทไฟล์ (ถ้าต้องการจำกัดเฉพาะไฟล์บางประเภท)
+if (isset($_FILES["image_file"]) && $_FILES["image_file"]["error"] == 0) {
+    $target_directory = "uploads/";
+    if (!is_dir($target_directory)) {
+        mkdir($target_directory, 0777, true);
+    }
+
+    // สร้างชื่อไฟล์ใหม่กันซ้ำ เช่น 1234567890.jpg
+    $new_filename = time() . '.' . strtolower(pathinfo($_FILES["image_file"]["name"], PATHINFO_EXTENSION));
+    $target_file = $target_directory . $new_filename;
+
     $image_file_type = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-    
-    // ตรวจสอบว่าไฟล์สามารถอัปโหลดได้หรือไม่
-    if (move_uploaded_file($_FILES["image_url"]["tmp_name"], $target_file)) {
-        echo "ไฟล์ " . basename($_FILES["image_url"]["name"]) . " อัปโหลดสำเร็จ!";
+
+    if (in_array($image_file_type, ['jpg', 'jpeg', 'png', 'gif'])) {
+        if ($_FILES["image_file"]["size"] < 2000000) {
+            if (move_uploaded_file($_FILES["image_file"]["tmp_name"], $target_file)) {
+                // อัปโหลดสำเร็จ
+            } else {
+                echo "<script>alert('เกิดข้อผิดพลาดในการย้ายไฟล์!');</script>";
+                $target_file = NULL;
+            }
+        } else {
+            echo "<script>alert('ไฟล์ใหญ่เกิน 2MB!');</script>";
+            $target_file = NULL;
+        }
     } else {
-        echo "เกิดข้อผิดพลาดในการอัปโหลดไฟล์!";
-        $target_file = ''; // ถ้าไม่สามารถอัปโหลดได้ ให้กำหนดให้เป็นค่าว่าง
+        echo "<script>alert('อนุญาตเฉพาะไฟล์ jpg, jpeg, png, gif เท่านั้น!');</script>";
+        $target_file = NULL;
     }
 } else {
-    $target_file = ''; // ถ้าไม่อัปโหลดไฟล์ ให้กำหนดให้เป็นค่าว่าง
+    $target_file = NULL;
 }
 
-// เชื่อมต่อฐานข้อมูล
-$servername = "localhost"; 
-$username = "root"; 
-$password = ""; 
-$dbname = "university_system"; 
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "university_system";
 
-try {
-    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // รับข้อมูลจากฟอร์ม
-    $building_name = $_POST['building_name'];
-    $building_description = $_POST['building_description'];
-    $latitude = $_POST['latitude'];
-    $longitude = $_POST['longitude'];
-    $image_url = $target_file; // ใช้ path ของไฟล์ที่อัปโหลด
-
-    // สร้างคำสั่ง SQL
-    $sql = "INSERT INTO buildings (building_name, building_description, latitude, longitude, image_url)
-            VALUES (:building_name, :building_description, :latitude, :longitude, :image_url)";
-
-    // เตรียมคำสั่ง SQL
-    $stmt = $conn->prepare($sql);
-    $stmt->bindParam(':building_name', $building_name);
-    $stmt->bindParam(':building_description', $building_description);
-    $stmt->bindParam(':latitude', $latitude);
-    $stmt->bindParam(':longitude', $longitude);
-    $stmt->bindParam(':image_url', $image_url);
-
-    // เรียกใช้งานคำสั่ง SQL
-    if ($stmt->execute()) {
-        echo "<script>alert('บันทึกข้อมูลเรียบร้อยแล้ว'); window.location.href = 'building_form.php';</script>";
-        exit;
-    } else {
-        echo "เกิดข้อผิดพลาดในการบันทึกข้อมูล";
-    }
-
-} catch (PDOException $e) {
-    echo "การเชื่อมต่อฐานข้อมูลล้มเหลว: " . $e->getMessage();
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
-$sql = "INSERT INTO buildings (building_name, building_description, latitude, longitude, image_url)
-        VALUES ('$building_name', '$building_description', '$latitude', '$longitude', '$image_url')";
-$conn = null;
+
+$building_name = $conn->real_escape_string($_POST['building_name']);
+$building_description = $conn->real_escape_string($_POST['building_description']);
+$latitude = floatval($_POST['latitude']);
+$longitude = floatval($_POST['longitude']);
+
+$sql = $conn->prepare("INSERT INTO buildings (building_name, building_description, latitude, longitude, image_url) 
+                       VALUES (?, ?, ?, ?, ?)");
+$sql->bind_param("sssds", $building_name, $building_description, $latitude, $longitude, $target_file);
+
+if ($sql->execute()) {
+    echo "<script>
+        alert('บันทึกข้อมูลตึกเรียบร้อยแล้ว!');
+        window.location.href = 'building_form.php';
+    </script>";
+} else {
+    echo "เกิดข้อผิดพลาด: " . $sql->error;
+}
+
+$conn->close();
 ?>

@@ -1,50 +1,49 @@
 <?php
-// เชื่อมต่อฐานข้อมูล
-$conn = new mysqli("localhost", "root", "", "university_system");
+$host = 'localhost';
+$db = 'university_system';
+$user = 'root';
+$pass = '';
+$conn = new mysqli($host, $user, $pass, $db);
 $conn->set_charset("utf8");
 
 if ($conn->connect_error) {
-    die("การเชื่อมต่อฐานข้อมูลล้มเหลว: " . $conn->connect_error);
+    die("การเชื่อมต่อล้มเหลว: " . $conn->connect_error);
 }
 
-// รับ ID ตึกจาก URL
-$buildingId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$building_id = intval($_GET['id']);
+$sql = $conn->prepare("SELECT * FROM buildings WHERE building_id = ?");
+$sql->bind_param("i", $building_id);
+$sql->execute();
+$result = $sql->get_result();
 
-// ดึงข้อมูลจากฐานข้อมูล
-$sql = "SELECT * FROM buildings WHERE id = $buildingId";
-$result = $conn->query($sql);
-$building = $result->fetch_assoc();
+if ($result->num_rows === 0) {
+    echo "ไม่พบข้อมูลตึกที่ต้องการ";
+    exit;
+}
+
+$row = $result->fetch_assoc();
 ?>
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>รายละเอียดตึก</title>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><?= htmlspecialchars($row['building_name']) ?></title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f8f9fa;
       color: #333;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background-color: #00695c;
-      color: white;
-      padding: 1.5rem;
-      text-align: center;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 800px;
       margin: 2rem auto;
       background-color: white;
+      padding: 1.5rem;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      overflow: hidden;
-      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     img {
@@ -52,11 +51,12 @@ $building = $result->fetch_assoc();
       max-height: 400px;
       object-fit: cover;
       border-radius: 10px;
+      margin-bottom: 1rem;
     }
 
-    h2 {
-      color: #004d40;
-      margin-top: 1.5rem;
+    h1 {
+      color: #00695c;
+      margin-bottom: 1rem;
     }
 
     p {
@@ -64,71 +64,31 @@ $building = $result->fetch_assoc();
       line-height: 1.6;
     }
 
-    .map {
-      margin-top: 2rem;
-      height: 400px;
-      width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-
-    .back-btn {
+    button {
       margin-top: 1.5rem;
-      display: inline-block;
-      padding: 10px 20px;
+      padding: 10px 25px;
+      font-size: 16px;
       background-color: #26a69a;
       color: white;
       border: none;
       border-radius: 6px;
-      text-decoration: none;
-      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
     }
 
-    .back-btn:hover {
+    button:hover {
       background-color: #00796b;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>รายละเอียดตึก</h1>
-  </header>
-
   <div class="container">
-    <?php if ($building): ?>
-      <img src="<?= htmlspecialchars($building['image_url']) ?>" alt="<?= htmlspecialchars($building['building_name']) ?>">
-      <h2><?= htmlspecialchars($building['building_name']) ?></h2>
-      <p><?= nl2br(htmlspecialchars($building['building_description'])) ?></p>
-
-      <!-- แผนที่ -->
-      <div class="map" id="map"></div>
-
-      <a class="back-btn" href="index.php">ย้อนกลับ</a>
-
-      <script>
-        function initMap() {
-          var location = { lat: <?= $building['latitude'] ?>, lng: <?= $building['longitude'] ?> };
-          var map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 17,
-            center: location,
-            mapTypeId: 'roadmap',
-          });
-
-          new google.maps.Marker({
-            position: location,
-            map: map,
-            title: "<?= htmlspecialchars($building['building_name']) ?>"
-          });
-        }
-      </script>
-      <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
-      </script>
-
-    <?php else: ?>
-      <p>ไม่พบข้อมูลตึก</p>
-      <a class="back-btn" href="index.php">กลับหน้าแรก</a>
-    <?php endif; ?>
+    <img src="image_viewer.php?file=<?= urlencode($row['image_url']) ?>" alt="<?= htmlspecialchars($row['building_name']) ?>">
+    <h1><?= htmlspecialchars($row['building_name']) ?></h1>
+    <p><?= nl2br(htmlspecialchars($row['building_description'])) ?></p>
+    <button onclick="window.history.back()">ย้อนกลับ</button>
   </div>
 </body>
 </html>
+
+<?php $conn->close(); ?>

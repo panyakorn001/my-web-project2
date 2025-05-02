@@ -1,5 +1,4 @@
 <?php
-// เชื่อมต่อฐานข้อมูล
 $host = 'localhost';
 $db = 'university_system';
 $user = 'root';
@@ -11,7 +10,6 @@ if ($conn->connect_error) {
     die("การเชื่อมต่อล้มเหลว: " . $conn->connect_error);
 }
 
-// ดึงข้อมูลตึก
 $sql = "SELECT * FROM buildings";
 $result = $conn->query($sql);
 ?>
@@ -21,7 +19,7 @@ $result = $conn->query($sql);
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>เลือกตึกมหาวิทยาลัย</title>
+  <title>ข้อมูลตึกมหาวิทยาลัย</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -78,6 +76,14 @@ $result = $conn->query($sql);
       text-align: center;
     }
 
+    .building-option .description {
+      padding: 0 0.8rem 0.8rem;
+      font-size: 0.95rem;
+      color: #555;
+      font-weight: normal;
+      text-align: center;
+    }
+
     footer {
       background-color: #004d40;
       color: white;
@@ -103,16 +109,17 @@ $result = $conn->query($sql);
 </head>
 <body>
   <header>
-    <h1>เลือกตึกมหาวิทยาลัย</h1>
+    <h1>ข้อมูลตึกมหาวิทยาลัย</h1>
   </header>
 
   <section>
-    <h2>เลือกตึกเพื่อดูข้อมูล</h2>
+    <h2>แสดงข้อมูลของตึกทั้งหมด</h2>
     <div class="building-grid">
       <?php while($row = $result->fetch_assoc()): ?>
         <div class="building-option">
-          <img src="<?= htmlspecialchars($row['image_url']) ?>" alt="<?= htmlspecialchars($row['building_name']) ?>">
+          <img src="image_viewer.php?file=<?= urlencode($row['image_url']) ?>" alt="<?= htmlspecialchars($row['building_name']) ?>">
           <p><?= htmlspecialchars($row['building_name']) ?></p>
+          <p class="description"><?= nl2br(htmlspecialchars($row['building_description'])) ?></p>
         </div>
       <?php endwhile; ?>
     </div>
