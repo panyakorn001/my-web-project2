@@ -1,12 +1,10 @@
 <?php
-// ตรวจสอบว่าไฟล์ถูกอัปโหลดมาหรือไม่
 if (isset($_FILES["image_file"]) && $_FILES["image_file"]["error"] == 0) {
     $target_directory = "uploads/";
     $target_file = $target_directory . basename($_FILES["image_file"]["name"]);
-    
     $image_file_type = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
     $allowed_types = ['jpg', 'jpeg', 'png'];
-    
+
     if (!in_array($image_file_type, $allowed_types)) {
         echo "ไฟล์ที่อัปโหลดไม่ถูกต้อง! โปรดอัปโหลดไฟล์ประเภท .jpg, .jpeg, หรือ .png เท่านั้น.";
         exit;
@@ -21,13 +19,18 @@ if (isset($_FILES["image_file"]) && $_FILES["image_file"]["error"] == 0) {
     echo "ไม่พบไฟล์ที่อัปโหลด หรือเกิดข้อผิดพลาดในการอัปโหลด";
 }
 
-$servername = "localhost"; 
-$username = "root"; 
-$password = ""; 
-$dbname = "university_system"; 
+// เชื่อมต่อ PostgreSQL จาก DATABASE_URL
+$dbUrl = getenv("DATABASE_URL");
+$dbparts = parse_url($dbUrl);
+
+$host = $dbparts['host'];
+$port = $dbparts['port'];
+$user = $dbparts['user'];
+$pass = $dbparts['pass'];
+$dbname = ltrim($dbparts['path'], '/');
 
 try {
-    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $pass);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $title = $_POST['title'];

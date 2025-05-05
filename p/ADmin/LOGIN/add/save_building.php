@@ -5,7 +5,6 @@ if (isset($_FILES["image_file"]) && $_FILES["image_file"]["error"] == 0) {
         mkdir($target_directory, 0777, true);
     }
 
-    // สร้างชื่อไฟล์ใหม่กันซ้ำ เช่น 1234567890.jpg
     $new_filename = time() . '.' . strtolower(pathinfo($_FILES["image_file"]["name"], PATHINFO_EXTENSION));
     $target_file = $target_directory . $new_filename;
 
@@ -13,9 +12,7 @@ if (isset($_FILES["image_file"]) && $_FILES["image_file"]["error"] == 0) {
 
     if (in_array($image_file_type, ['jpg', 'jpeg', 'png', 'gif'])) {
         if ($_FILES["image_file"]["size"] < 2000000) {
-            if (move_uploaded_file($_FILES["image_file"]["tmp_name"], $target_file)) {
-                // อัปโหลดสำเร็จ
-            } else {
+            if (!move_uploaded_file($_FILES["image_file"]["tmp_name"], $target_file)) {
                 echo "<script>alert('เกิดข้อผิดพลาดในการย้ายไฟล์!');</script>";
                 $target_file = NULL;
             }
@@ -31,33 +28,44 @@ if (isset($_FILES["image_file"]) && $_FILES["image_file"]["error"] == 0) {
     $target_file = NULL;
 }
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "university_system";
+// เชื่อม PostgreSQL จาก DATABASE_URL
+$dbUrl = getenv("DATABASE_URL");
+$dbparts = parse_url($dbUrl);
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$host = $dbparts['host'];
+$port = $dbparts['port'];
+$user = $dbparts['user'];
+$pass = $dbparts['pass'];
+$dbname = ltrim($dbparts['path'], '/');
+
+try {
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $pass);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $building_name = $_POST['building_name'];
+    $building_description = $_POST['building_description'];
+    $latitude = floatval($_POST['latitude']);
+    $longitude = floatval($_POST['longitude']);
+
+    $sql = "INSERT INTO buildings (building_name, building_description, latitude, longitude, image_url) 
+            VALUES (:building_name, :building_description, :latitude, :longitude, :image_url)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':building_name', $building_name);
+    $stmt->bindParam(':building_description', $building_description);
+    $stmt->bindParam(':latitude', $latitude);
+    $stmt->bindParam(':longitude', $longitude);
+    $stmt->bindParam(':image_url', $target_file);
+
+    if ($stmt->execute()) {
+        echo "<script>
+            alert('บันทึกข้อมูลตึกเรียบร้อยแล้ว!');
+            window.location.href = 'building_form.php';
+        </script>";
+    } else {
+        echo "เกิดข้อผิดพลาด";
+    }
+
+} catch (PDOException $e) {
+    echo "การเชื่อมต่อฐานข้อมูลล้มเหลว: " . $e->getMessage();
 }
-
-$building_name = $conn->real_escape_string($_POST['building_name']);
-$building_description = $conn->real_escape_string($_POST['building_description']);
-$latitude = floatval($_POST['latitude']);
-$longitude = floatval($_POST['longitude']);
-
-$sql = $conn->prepare("INSERT INTO buildings (building_name, building_description, latitude, longitude, image_url) 
-                       VALUES (?, ?, ?, ?, ?)");
-$sql->bind_param("sssds", $building_name, $building_description, $latitude, $longitude, $target_file);
-
-if ($sql->execute()) {
-    echo "<script>
-        alert('บันทึกข้อมูลตึกเรียบร้อยแล้ว!');
-        window.location.href = 'building_form.php';
-    </script>";
-} else {
-    echo "เกิดข้อผิดพลาด: " . $sql->error;
-}
-
-$conn->close();
 ?>

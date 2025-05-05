@@ -5,30 +5,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $conn = new mysqli('localhost', 'root', '', 'university_system');
+    // ดึงค่า DATABASE_URL จาก environment variables ของ Heroku
+    $url = getenv("DATABASE_URL");
 
-    if ($conn->connect_error) {
-        die('การเชื่อมต่อฐานข้อมูลล้มเหลว: ' . $conn->connect_error);
+    // ส่งข้อมูลไปยัง JavaScript เพื่อใช้ console.log
+    echo "<script>console.log('DATABASE_URL: $url');</script>";
+
+    // แยกค่า database URL
+    $db = parse_url($url);
+    $host = $db['host'];
+    $user = $db['user'];
+    $pass = $db['pass'];
+    $dbname = ltrim($db['path'], '/');
+    $port = $db['port'];
+
+    try {
+        // เชื่อมต่อกับ PostgreSQL
+        $pdo = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $pass);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        // ส่งข้อความไปยัง JavaScript เมื่อเชื่อมต่อสำเร็จ
+        echo "<script>console.log('เชื่อมต่อกับฐานข้อมูลสำเร็จ');</script>";
+
+        // ค้นหาผู้ใช้ในฐานข้อมูล
+        $sql = "SELECT * FROM admins WHERE username = :username AND password = :password";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':password', $password);
+        $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            $_SESSION['username'] = $username;
+            header('Location: dashboard.php');
+            exit;
+        } else {
+            $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+            // ส่งข้อความไปยัง JavaScript หากข้อมูลไม่ถูกต้อง
+            echo "<script>console.log('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');</script>";
+        }
+    } catch (PDOException $e) {
+        // ส่งข้อผิดพลาดไปยัง JavaScript
+        echo "<script>console.log('เชื่อมต่อฐานข้อมูลไม่สำเร็จ: " . $e->getMessage() . "');</script>";
     }
-
-    $sql = "SELECT * FROM admins WHERE username = ? AND password = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ss', $username, $password);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $_SESSION['username'] = $username;
-        header('Location: dashboard.php');
-        exit;
-    } else {
-        $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
-    }
-
-    $stmt->close();
-    $conn->close();
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="th">
@@ -201,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
 
                 <div class="button-group">
-                <button onclick="window.location.href='http://localhost/index.html';">ย้อนกลับ</button>
+                    <button type="button" onclick="window.location.href='http://localhost/index.html';">ย้อนกลับ</button>
                     <button type="submit">ล็อกอิน</button>
                 </div>
             </form>

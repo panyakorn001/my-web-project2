@@ -1,19 +1,33 @@
 <?php
-$host = 'localhost';
-$db = 'university_system';
-$user = 'root';
-$pass = '';
-$conn = new mysqli($host, $user, $pass, $db);
-$conn->set_charset("utf8");
+// ตรวจสอบการเชื่อมต่อกับ Heroku หรือ Railway
+$dsn = getenv('DATABASE_URL'); // รับค่าจาก env หรือ config ของ Heroku/Railway
+if ($dsn) {
+    $parsed_url = parse_url($dsn);
 
-if ($conn->connect_error) {
-    die("การเชื่อมต่อล้มเหลว: " . $conn->connect_error);
+    // แยกข้อมูลจาก URL
+    $host = $parsed_url['host'];
+    $user = $parsed_url['user'];
+    $pass = $parsed_url['pass'];
+    $db = ltrim($parsed_url['path'], '/');
+    $port = $parsed_url['port'];
+
+    // สร้างการเชื่อมต่อ
+    $conn = new mysqli($host, $user, $pass, $db, $port);
+    $conn->set_charset("utf8");
+
+    if ($conn->connect_error) {
+        die("การเชื่อมต่อล้มเหลว: " . $conn->connect_error);
+    }
+} else {
+    // การเชื่อมต่อในกรณีที่ไม่ใช่ Heroku หรือ Railway
+    $conn = new mysqli('localhost', 'root', '', 'university_system');
+    $conn->set_charset("utf8");
+
+    if ($conn->connect_error) {
+        die("การเชื่อมต่อล้มเหลว: " . $conn->connect_error);
+    }
 }
-
-$sql = "SELECT * FROM buildings";
-$result = $conn->query($sql);
 ?>
-
 <!DOCTYPE html>
 <html lang="th">
 <head>

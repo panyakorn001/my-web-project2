@@ -22,36 +22,48 @@ if (isset($_FILES["image_file"]) && $_FILES["image_file"]["error"] == 0) {
     $target_file = '';
 }
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "university_system";
+// ✅ อ่าน DATABASE_URL จาก Heroku
+$dbUrl = getenv("DATABASE_URL");
+$dbparts = parse_url($dbUrl);
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$host = $dbparts['host'];
+$port = $dbparts['port'];
+$user = $dbparts['user'];
+$pass = $dbparts['pass'];
+$dbname = ltrim($dbparts['path'], '/');
+
+try {
+    $conn = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $pass);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $building_id = intval($_POST['building_id']);
+    $room_name = $_POST['room_name'];
+    $room_description = $_POST['room_description'];
+    $floor = intval($_POST['floor']);
+    $latitude = floatval($_POST['latitude']);
+    $longitude = floatval($_POST['longitude']);
+
+    $sql = "INSERT INTO rooms (building_id, room_name, room_description, floor, latitude, longitude, image_url)
+            VALUES (:building_id, :room_name, :room_description, :floor, :latitude, :longitude, :image_url)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':building_id', $building_id);
+    $stmt->bindParam(':room_name', $room_name);
+    $stmt->bindParam(':room_description', $room_description);
+    $stmt->bindParam(':floor', $floor);
+    $stmt->bindParam(':latitude', $latitude);
+    $stmt->bindParam(':longitude', $longitude);
+    $stmt->bindParam(':image_url', $target_file);
+
+    if ($stmt->execute()) {
+        echo "<script>
+            alert('บันทึกข้อมูลห้องเรียบร้อยแล้ว!');
+            window.location.href = 'room_form.php';
+        </script>";
+    } else {
+        echo "เกิดข้อผิดพลาดในการบันทึกข้อมูล";
+    }
+
+} catch (PDOException $e) {
+    echo "การเชื่อมต่อฐานข้อมูลล้มเหลว: " . $e->getMessage();
 }
-
-$building_id = intval($_POST['building_id']);
-$room_name = $conn->real_escape_string($_POST['room_name']);
-$room_description = $conn->real_escape_string($_POST['room_description']);
-$floor = intval($_POST['floor']);
-$latitude = floatval($_POST['latitude']);
-$longitude = floatval($_POST['longitude']);
-
-$sql = $conn->prepare("INSERT INTO rooms (building_id, room_name, room_description, floor, latitude, longitude, image_url) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?)");
-$sql->bind_param("sssddds", $building_id, $room_name, $room_description, $floor, $latitude, $longitude, $target_file);
-
-if ($sql->execute()) {
-    // ใช้ JavaScript แสดงป๊อปอัปแล้ว redirect
-    echo "<script>
-        alert('บันทึกข้อมูลห้องเรียบร้อยแล้ว!');
-        window.location.href = 'room_form.php';
-    </script>";
-} else {
-    echo "เกิดข้อผิดพลาด: " . $sql->error;
-}
-
-$conn->close();
 ?>
